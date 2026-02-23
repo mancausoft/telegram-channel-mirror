@@ -108,7 +108,10 @@ Edit `config.json`:
 | `api_id` | Your Telegram API ID from my.telegram.org |
 | `api_hash` | Your Telegram API hash from my.telegram.org |
 | `session_name` | Name for the session file (default: `mirror_session`) |
-| `delay` | Seconds to wait between messages to avoid rate limits (default: `1.5`) |
+| `delay` | Seconds to wait between messages (default: `1.5`) |
+| `batch_size` | Number of messages to send before pausing (default: `100`) |
+| `batch_pause` | Seconds to pause after each batch to avoid flood bans (default: `30`) |
+| `flood_check` | Enable batch pausing to prevent flood bans (default: `true`). Set to `false` to disable |
 | `pairs` | List of source/destination pairs to mirror |
 
 ### Pair options

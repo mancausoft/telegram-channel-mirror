@@ -115,6 +115,10 @@ async def backfill_pair(client, pair, state, state_file, config):
 
     copied = 0
     skipped = 0
+    batch_count = 0
+    batch_size = config.get('batch_size', 100)
+    batch_pause = config.get('batch_pause', 30)
+    flood_check = config.get('flood_check', True)
 
     async for message in client.iter_messages(**iter_kwargs):
         if message.id <= start_id:
@@ -123,6 +127,7 @@ async def backfill_pair(client, pair, state, state_file, config):
         ok = await copy_message(client, dest_entity, dest_topic, message)
         if ok:
             copied += 1
+            batch_count += 1
         else:
             skipped += 1
 
@@ -132,7 +137,12 @@ async def backfill_pair(client, pair, state, state_file, config):
             save_state(state_file, state)
             print(f"  [{copied} copied, {skipped} skipped] last id: {message.id}")
 
-        await asyncio.sleep(delay)
+        if flood_check and batch_count >= batch_size:
+            print(f"  pausing {batch_pause}s to avoid flood ban...")
+            await asyncio.sleep(batch_pause)
+            batch_count = 0
+        else:
+            await asyncio.sleep(delay)
 
     save_state(state_file, state)
     print(f"  done: {copied} copied, {skipped} skipped")

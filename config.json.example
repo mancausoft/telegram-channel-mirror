@@ -3,6 +3,9 @@
     "api_hash": "your_api_hash_from_my_telegram_org",
     "session_name": "mirror_session",
     "delay": 1.5,
+    "batch_size": 100,
+    "batch_pause": 30,
+    "flood_check": true,
     "pairs": [
         {
             "source": "@public_channel",
