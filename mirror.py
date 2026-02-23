@@ -10,9 +10,7 @@ even if the original is taken down for copyright.
 import asyncio
 import json
 import os
-import sys
 import argparse
-import time
 
 CONFIG_FILE = 'config.json'
 STATE_FILE = 'state.json'
@@ -52,19 +50,23 @@ async def copy_message(client, dest, dest_topic, message):
     reply_to = dest_topic if dest_topic else None
 
     try:
+        text = message.message or ''
+        entities = message.entities
         if message.media:
             await client.send_file(
                 dest,
                 file=message.media,
-                caption=message.text or '',
-                formatting_entities=message.entities,
+                caption=text,
+                formatting_entities=entities,
+                parse_mode=None,
                 reply_to=reply_to,
             )
-        elif message.text:
+        elif text:
             await client.send_message(
                 dest,
-                message=message.text,
-                formatting_entities=message.entities,
+                message=text,
+                formatting_entities=entities,
+                parse_mode=None,
                 reply_to=reply_to,
             )
         else:
@@ -76,7 +78,7 @@ async def copy_message(client, dest, dest_topic, message):
         return await copy_message(client, dest, dest_topic, message)
 
 
-async def backfill_pair(client, pair, state, config):
+async def backfill_pair(client, pair, state, state_file, config):
     """Copy all messages from source to dest, starting from last saved position."""
     source = pair['source']
     dest = pair['dest']
@@ -124,17 +126,17 @@ async def backfill_pair(client, pair, state, config):
         state[sk] = message.id
 
         if copied % 10 == 0 and copied > 0:
-            save_state(STATE_FILE, state)
+            save_state(state_file, state)
             print(f"  [{copied} copied, {skipped} skipped] last id: {message.id}")
 
         await asyncio.sleep(delay)
 
-    save_state(STATE_FILE, state)
+    save_state(state_file, state)
     print(f"  done: {copied} copied, {skipped} skipped")
     return copied
 
 
-async def watch_pair(client, pair, state, config):
+async def watch_pair(client, pair, state, state_file, config):
     """Watch a source for new messages and copy them in real time."""
     from telethon import events
 
@@ -175,7 +177,7 @@ async def watch_pair(client, pair, state, config):
         ok = await copy_message(client, dest_entity, dest_topic, msg)
         if ok:
             state[sk] = msg.id
-            save_state(STATE_FILE, state)
+            save_state(state_file, state)
             print(f"  synced message {msg.id} from {src_name}")
 
 
@@ -196,11 +198,9 @@ async def main():
 
     args = parser.parse_args()
 
-    global STATE_FILE
-    STATE_FILE = args.state
-
+    state_file = args.state
     config = load_config(args.config)
-    state = load_state(STATE_FILE)
+    state = load_state(state_file)
 
     from telethon import TelegramClient
 
@@ -215,11 +215,11 @@ async def main():
 
         if args.command in ('backfill', 'run'):
             for pair in pairs:
-                await backfill_pair(client, pair, state, config)
+                await backfill_pair(client, pair, state, state_file, config)
 
         if args.command in ('sync', 'run'):
             for pair in pairs:
-                await watch_pair(client, pair, state, config)
+                await watch_pair(client, pair, state, state_file, config)
 
             print("listening for new messages... (ctrl+c to stop)")
             await client.run_until_disconnected()
