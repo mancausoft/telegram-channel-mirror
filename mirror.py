@@ -72,6 +72,7 @@ async def copy_message(client, dest, dest_topic, message):
                 reply_to=reply_to,
             )
         else:
+            print(f"  skipped message {message.id}: type={type(message).__name__}, media={type(message.media).__name__ if message.media else None}")
             return False
         return True
     except FloodWaitError as e:
