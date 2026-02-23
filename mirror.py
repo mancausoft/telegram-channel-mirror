@@ -49,10 +49,12 @@ async def copy_message(client, dest, dest_topic, message):
 
     reply_to = dest_topic if dest_topic else None
 
+    from telethon.tl.types import MessageMediaWebPage
+
     try:
         text = message.message or ''
         entities = message.entities
-        if message.media:
+        if message.media and not isinstance(message.media, MessageMediaWebPage):
             await client.send_file(
                 dest,
                 file=message.media,
