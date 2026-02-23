@@ -1,0 +1,14 @@
+{
+    "api_id": 12345678,
+    "api_hash": "your_api_hash_from_my_telegram_org",
+    "session_name": "mirror_session",
+    "delay": 1.5,
+    "pairs": [
+        {
+            "source": "@public_channel",
+            "dest": -1001234567890,
+            "source_topic": null,
+            "dest_topic": null
+        }
+    ]
+}
